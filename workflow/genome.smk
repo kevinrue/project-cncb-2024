@@ -1,32 +1,37 @@
+def cmd_download_genome_fastas(config):
+    tmp_dir = "tmp_genome"
+    curl_template_cmd = "curl {source_url} > {tmp_dir}/{basename} && "
+    cmd = f"mkdir -p {tmp_dir} && "
+    for source_url in config["genome"]["fastas"]:
+        basename = os.path.basename(source_url)
+        cmd += curl_template_cmd.format(source_url=source_url, basename=basename, tmp_dir=tmp_dir)
+    cmd += f"zcat {tmp_dir}/*.fa.gz > resources/genome/genome.fa && "
+    cmd += "bgzip resources/genome/genome.fa && "
+    cmd += f"rm -rf {tmp_dir}"
+    return cmd
+
+cmd_download_genome_fastas = cmd_download_genome_fastas(config)
+
 rule prepare_genome_fasta:
     output:
-        "resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.fa.gz",
+        "resources/genome/genome.fa.gz",
     log:
         "logs/prepare_genome_fasta.log",
     shell:
-        "mkdir -p tmp_genome && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.2L.fa.gz > tmp_genome/2L.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.2R.fa.gz > tmp_genome/2R.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.3L.fa.gz > tmp_genome/3L.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.3R.fa.gz > tmp_genome/3R.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.4.fa.gz > tmp_genome/4.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.X.fa.gz > tmp_genome/X.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.Y.fa.gz > tmp_genome/Y.fa.gz 2> {log} && "
-        "curl https://ftp.ensembl.org/pub/release-113/fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.mitochondrion_genome.fa.gz 2> {log} > tmp_genome/mitochondrion_genome.fa.gz && "
-        "zcat tmp_genome/*.fa.gz > resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.fa 2> {log} && "
-        "bgzip resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.fa 2> {log} && "
-        "rm -rf tmp_genome"
+        "{cmd_download_genome_fastas} 2> {log}"
 
 rule prepare_genome_gatk_index:
     input:
-        "resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.fa.gz",
+        "resources/genome/genome.fa.gz",
     output:
-        "resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.dict",
+        "resources/genome/genome.dict",
+        "resources/genome/genome.fa.gz.fai",
+        "resources/genome/genome.fa.gz.gzi",
     log:
         gatkout="logs/prepare_genome_gatk_index.gatk.out",
         gatkerr="logs/prepare_genome_gatk_index.gatk.err",
         samtoolkout="logs/prepare_genome_gatk_index.samtools.out",
         samtoolserr="logs/prepare_genome_gatk_index.samtools.err",
     shell:
-        "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkout} && "
+        "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} && "
         "samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"

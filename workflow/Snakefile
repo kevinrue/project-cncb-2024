@@ -5,6 +5,8 @@
 
 container: "library://kevinrue/cncb/gatk4:latest"
 
+configfile: "config/config.yaml"
+
 ##### load rules #####
 
 include: "genome.smk"
@@ -12,4 +14,6 @@ include: "genome.smk"
 ##### main rule #####
 rule all:
     input:
-        "resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.dict",
+        "resources/genome/genome.dict",
+        "resources/genome/genome.fa.gz.fai",
+        "resources/genome/genome.fa.gz.gzi",
