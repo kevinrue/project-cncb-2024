@@ -6,4 +6,4 @@
 ##### load rules #####
 
 
-include: "downloads.smk"
+include: "genome.smk"
