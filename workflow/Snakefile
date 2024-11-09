@@ -3,7 +3,13 @@
 # https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
 # in particular regarding the standardized folder structure mentioned there. 
 
+container: "library://kevinrue/cncb/gatk4:latest"
+
 ##### load rules #####
 
-
 include: "genome.smk"
+
+##### main rule #####
+rule all:
+    input:
+        "resources/genome/Drosophila_melanogaster.BDGP6.46.dna.primary_assembly.dict",
