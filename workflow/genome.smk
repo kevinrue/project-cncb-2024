@@ -10,7 +10,7 @@ def cmd_download_genome_fastas(config):
     cmd += f"rm -rf {tmp_dir}"
     return cmd
 
-cmd_download_genome_fastas = cmd_download_genome_fastas(config)
+cmd_download_genome_fastas_str = cmd_download_genome_fastas(config)
 
 rule prepare_genome_fasta:
     output:
@@ -18,7 +18,7 @@ rule prepare_genome_fasta:
     log:
         "logs/prepare_genome_fasta.log",
     shell:
-        "{cmd_download_genome_fastas} 2> {log}"
+        "{cmd_download_genome_fastas_str} 2> {log}"
 
 rule prepare_genome_gatk_index:
     input:
