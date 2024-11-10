@@ -29,5 +29,6 @@ Containers:
 # Execution
 
 ```
+cd $(realpath .) # containers prefer real paths
 snakemake --sdm apptainer
 ```
