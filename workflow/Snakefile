@@ -24,4 +24,5 @@ rule all:
         "resources/genome/genome.fa.gz.bwt",
         "resources/genome/genome.fa.gz.pac",
         "resources/genome/genome.fa.gz.sa",
-
+        #bwa mem
+        "resources/genome_resequencing/mapped.bam",

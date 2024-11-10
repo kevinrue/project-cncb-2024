@@ -50,3 +50,24 @@ rule prepare_genome_bwa_index:
         err="logs/prepare_genome_bwa_index.err",
     shell:
         "bwa index {input} > {log.out} 2> {log.err}"
+
+rule map_reads_to_genome:
+    input:
+        reads=[
+            "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_1.fq.gz",
+            "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_2.fq.gz"],
+        idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+    output:
+        "resources/genome_resequencing/mapped.bam",
+    log:
+        "logs/map_reads_to_genome.log",
+    params:
+        extra=r"-R '@RG\tID:Gdna_1\tSM:Gdna_1'",
+        sorting="none",  # Can be 'none', 'samtools' or 'picard'.
+        sort_order="queryname",  # Can be 'queryname' or 'coordinate'.
+        sort_extra="",  # Extra args for samtools/picard.
+    threads: 8
+    resources:
+        runtime="2h",
+    wrapper:
+        "v5.0.1/bio/bwa/mem"

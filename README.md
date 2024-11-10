@@ -26,9 +26,15 @@ Containers:
 
 - <https://cloud.sylabs.io/library/kevinrue/cncb/gatk4:latest>
 
+Environment:
+
+- `conda install bioconda::snakemake-wrapper-utils`
+
 # Execution
 
 ```
 cd $(realpath .) # containers prefer real paths
-snakemake --sdm apptainer
+snakemake \
+  --sdm apptainer \
+  --apptainer-args "--bind /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1"
 ```
