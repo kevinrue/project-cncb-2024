@@ -111,7 +111,8 @@ rule mark_duplicates:
         bam="resources/genome_resequencing/mapped.dedup.bam",
         metrics="resources/genome_resequencing/mapped.dedup.metrics.txt",
     log:
-        "logs/mark_duplicates.log",
+        out="logs/mark_duplicates.out",
+        err="logs/mark_duplicates.err",
     resources:
         runtime="1h",
     shell:
@@ -124,6 +125,27 @@ rule mark_duplicates:
         " --ASSUME_SORT_ORDER \"queryname\""
         " --CLEAR_DT \"false\""
         " --ADD_PG_TAG_TO_READS false"
+        " > {log.out} 2> {log.err}"
 
-# SortSam
+rule sort_bam:
+    input:
+        "resources/genome_resequencing/mapped.dedup.bam",
+    output:
+        "resources/genome_resequencing/mapped.dedup.sorted.bam",
+    log:
+        out="logs/sort_bam.out",
+        err="logs/sort_bam.err",
+    resources:
+        runtime="1h",
+    shell:
+        "picard SortSam"
+        " --INPUT {input}"
+        " --OUTPUT {output}"
+        " --SORT_ORDER coordinate"
+        " --CREATE_INDEX true"
+        " --CREATE_MD5_FILE true"
+        " --MAX_RECORDS_IN_RAM 300000"
+        " > {log.out} 2> {log.err}"
+    
+
 # HaplotypeCaller 

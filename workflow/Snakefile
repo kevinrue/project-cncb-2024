@@ -14,5 +14,5 @@ include: "genome.smk"
 ##### main rule #####
 rule all:
     input:
-        "resources/genome_resequencing/mapped.dedup.bam",
-        "resources/genome_resequencing/mapped.dedup.metrics.txt",
+        "resources/genome_resequencing/mapped.dedup.sorted.bam",
+
