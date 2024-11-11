@@ -9,10 +9,12 @@ configfile: "config/config.yaml"
 
 ##### load rules #####
 
+include: "common.smk"
 include: "genome.smk"
 
 ##### main rule #####
 rule all:
     input:
         "resources/genome_resequencing/mapped.dedup.sorted.bam",
+        get_final_output()
 

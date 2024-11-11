@@ -147,5 +147,29 @@ rule sort_bam:
         " --MAX_RECORDS_IN_RAM 300000"
         " > {log.out} 2> {log.err}"
     
-
-# HaplotypeCaller 
+rule haplotype_caller:
+    input:
+        genome="resources/genome/genome.fa.gz",
+        bam="resources/genome_resequencing/mapped.dedup.sorted.bam",
+    output:
+        gvcf="genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.gvcf",
+        bamout="genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.bamout.bam",
+    log:
+        out="logs/haplotype_caller.out",
+        err="logs/haplotype_caller.err",
+    resources:
+        runtime="4h",
+    shell:
+        "picard HaplotypeCaller"
+        " -R {input.genome}"
+        " -I {input.bam}"
+        " -L ${interval}"
+        " -O {output.gvcf}"
+        " -contamination 0"
+        " -G StandardAnnotation"
+        " -G StandardHCAnnotation"
+        " -G AS_StandardAnnotation"
+        " -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90"
+        " -ERC GVCF"
+        " -bamout {output.bamout}"
+        " > {log.out} 2> {log.err}"
