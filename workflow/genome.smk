@@ -1,3 +1,6 @@
+# Workflow readme <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf.md>
+# Workflow wdl <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf.wdl>
+
 def cmd_download_genome_fastas(config):
     tmp_dir = "tmp_genome"
     curl_template_cmd = "curl {source_url} > {tmp_dir}/{basename} && "
@@ -18,7 +21,7 @@ rule prepare_genome_fasta:
     log:
         "logs/prepare_genome_fasta.err",
     shell:
-        "{cmd_download_genome_fastas_str} 2> {log}"
+        "({cmd_download_genome_fastas_str}) 2> {log}"
 
 rule prepare_genome_gatk_index:
     input:
@@ -33,8 +36,8 @@ rule prepare_genome_gatk_index:
         samtoolkout="logs/prepare_genome_gatk_index.samtools.out",
         samtoolserr="logs/prepare_genome_gatk_index.samtools.err",
     shell:
-        "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} && "
-        "samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"
+        "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
+        " samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"
 
 rule prepare_genome_bwa_index:
     input:
@@ -51,6 +54,7 @@ rule prepare_genome_bwa_index:
     shell:
         "bwa index {input} > {log.out} 2> {log.err}"
 
+## The rule below uses a wrapper that seems to require 'conda' installed in the container
 # rule map_reads_to_genome:
 #     input:
 #         reads=[
@@ -96,4 +100,30 @@ rule map_reads_to_genome:
         " -R '@RG\\tID:Gdna_1\\tSM:Gdna_1'"
         " {input.genome}"
         " {input.reads}"
-        " | " + "samtools view -@ {threads} -b - > {output}" + ") 2> {log}"
+        " | samtools view -@ {threads} -b - > {output}) 2> {log}"
+
+# Command <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1007>
+# ASSUME_SORT_ORDER="queryname" <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1022>
+rule mark_duplicates:
+    input:
+        "resources/genome_resequencing/mapped.bam",
+    output:
+        bam="resources/genome_resequencing/mapped.dedup.bam",
+        metrics="resources/genome_resequencing/mapped.dedup.metrics.txt",
+    log:
+        "logs/mark_duplicates.log",
+    resources:
+        runtime="1h",
+    shell:
+        "picard MarkDuplicates"
+        " --INPUT {input}"
+        " --OUTPUT {output.bam}"
+        " --METRICS_FILE {output.metrics}"
+        " --VALIDATION_STRINGENCY SILENT"
+        " --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500"
+        " --ASSUME_SORT_ORDER \"queryname\""
+        " --CLEAR_DT \"false\""
+        " --ADD_PG_TAG_TO_READS false"
+
+# SortSam
+# HaplotypeCaller 

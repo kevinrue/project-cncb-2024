@@ -14,15 +14,5 @@ include: "genome.smk"
 ##### main rule #####
 rule all:
     input:
-        # gatk index
-        "resources/genome/genome.dict",
-        "resources/genome/genome.fa.gz.fai",
-        "resources/genome/genome.fa.gz.gzi",
-        # bwa index
-        "resources/genome/genome.fa.gz.amb",
-        "resources/genome/genome.fa.gz.ann",
-        "resources/genome/genome.fa.gz.bwt",
-        "resources/genome/genome.fa.gz.pac",
-        "resources/genome/genome.fa.gz.sa",
-        #bwa mem
-        "resources/genome_resequencing/mapped.bam",
+        "resources/genome_resequencing/mapped.dedup.bam",
+        "resources/genome_resequencing/mapped.dedup.metrics.txt",
