@@ -15,4 +15,4 @@ include: "genome.smk"
 ##### main rule #####
 rule all:
     input:
-        "resources/genome_resequencing/mapped.dedup.sorted.merged.g.vcf.gz",
+        "resources/genome_resequencing/mapped.dedup.sorted.merged.vcf.gz",

@@ -197,3 +197,21 @@ rule merge_gcvfs:
         " {merge_gcvfs_inputs_str}"
         " -O {output}"
         " > {log.out} 2> {log.err}"
+
+rule genotype_gvcfs:
+    input:
+        vcf="resources/genome_resequencing/mapped.dedup.sorted.merged.g.vcf.gz",
+        genome="resources/genome/genome.fa.gz",
+    output:
+        "resources/genome_resequencing/mapped.dedup.sorted.merged.vcf.gz",
+    log:
+        out="logs/genotype_gvcfs.out",
+        err="logs/genotype_gvcfs.err",
+    resources:
+        runtime="10m",
+    shell:
+        "gatk GenotypeGVCFs"
+        " -R {input.genome}"
+        " -V {input.vcf}"
+        " -O {output}"
+        " > {log.out} 2> {log.err}"
