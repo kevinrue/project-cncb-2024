@@ -136,7 +136,7 @@ rule sort_bam:
         out="logs/sort_bam.out",
         err="logs/sort_bam.err",
     resources:
-        runtime="1h",
+        runtime="2h",
     shell:
         "picard SortSam"
         " --INPUT {input}"
@@ -152,18 +152,18 @@ rule haplotype_caller:
         genome="resources/genome/genome.fa.gz",
         bam="resources/genome_resequencing/mapped.dedup.sorted.bam",
     output:
-        gvcf="genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.gvcf",
-        bamout="genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.bamout.bam",
+        gvcf="resources/genome_sequencing/mapped.dedup.sorted.{interval}.gvcf",
+        bamout="resources/genome_sequencing/mapped.dedup.sorted.{interval}.bamout.bam",
     log:
-        out="logs/haplotype_caller.out",
-        err="logs/haplotype_caller.err",
+        out="logs/haplotype_caller.{interval}.out",
+        err="logs/haplotype_caller.{interval}.err",
     resources:
         runtime="4h",
     shell:
-        "picard HaplotypeCaller"
+        "gatk HaplotypeCaller"
         " -R {input.genome}"
         " -I {input.bam}"
-        " -L ${interval}"
+        " -L {wildcards.interval}"
         " -O {output.gvcf}"
         " -contamination 0"
         " -G StandardAnnotation"
@@ -172,4 +172,28 @@ rule haplotype_caller:
         " -GQB 10 -GQB 20 -GQB 30 -GQB 40 -GQB 50 -GQB 60 -GQB 70 -GQB 80 -GQB 90"
         " -ERC GVCF"
         " -bamout {output.bamout}"
+        " > {log.out} 2> {log.err}"
+
+def merge_gcvfs_inputs(config):
+    cmd = ""
+    for interval in config['genome']['intervals']:
+        cmd += f" -I resources/genome_resequencing/mapped.dedup.sorted.{interval}.gvcf"
+    return cmd
+
+merge_gcvfs_inputs_str = merge_gcvfs_inputs(config)
+
+rule merge_gcvfs:
+    input:
+        expand("resources/genome_resequencing/mapped.dedup.sorted.{interval}.gvcf", interval=config['genome']['intervals']),
+    output:
+        "resources/genome_resequencing/mapped.dedup.sorted.merged.g.vcf.gz",
+    log:
+        out="logs/merge_gcvfs.out",
+        err="logs/merge_gcvfs.err",
+    resources:
+        runtime="10m",
+    shell:
+        "gatk SortVcf"
+        " {merge_gcvfs_inputs_str}"
+        " -O {output}"
         " > {log.out} 2> {log.err}"

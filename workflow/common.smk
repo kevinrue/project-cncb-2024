@@ -1,12 +1,12 @@
 def get_final_output():
     intervals = config['genome']['intervals']
     final_output = expand(
-        "genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.gvcf",
+        "resources/genome_sequencing/mapped.dedup.sorted.{interval}.gvcf",
         interval=intervals,
     )
     final_output.append(
         expand(
-            "genome_sequencing/aln-pe.rg.dedup.sorted.${interval}.bamout.bam",
+            "resources/genome_sequencing/mapped.dedup.sorted.{interval}.bamout.bam",
             interval=intervals,
         )
     )
