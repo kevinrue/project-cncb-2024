@@ -7,6 +7,8 @@ container: "library://kevinrue/cncb/gatk4:latest"
 
 configfile: "config/config.yaml"
 
+genome_fastqs_noext = [file.replace('.fq.gz', '') for file in config['genome']['fastqs']]
+
 ##### load rules #####
 
 include: "common.smk"
@@ -17,3 +19,5 @@ include: "genome_qc.smk"
 rule all:
     input:
         "resources/genome_resequencing/mapped.dedup.sorted.merged.fa.gz",
+        "qc/genome/multiqc/multiqc.config.html",
+

@@ -1,5 +1,9 @@
+# Source 1
 # Workflow readme <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf.md>
 # Workflow wdl <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf.wdl>
+
+# Source 2
+# Workflow readme <
 
 def cmd_download_genome_fastas(config):
     tmp_dir = "tmp_genome"
@@ -15,6 +19,10 @@ def cmd_download_genome_fastas(config):
 
 cmd_download_genome_fastas_str = cmd_download_genome_fastas(config)
 
+# Download a list of genome FASTA files (see config/config.yaml).
+# Concatenate them into a single FASTA file.
+# Compress it.
+# See above for a function that generates the command (cmd_download_genome_fastas).
 rule prepare_genome_fasta:
     output:
         "resources/genome/genome.fa.gz",
@@ -23,6 +31,8 @@ rule prepare_genome_fasta:
     shell:
         "({cmd_download_genome_fastas_str}) 2> {log}"
 
+# Build GATK index for the combined genome FASTA file.
+# Necessary for GATK tools.
 rule prepare_genome_gatk_index:
     input:
         "resources/genome/genome.fa.gz",
@@ -78,7 +88,7 @@ rule prepare_genome_bwa_index:
 
 rule map_reads_to_genome:
     input:
-        reads=config['genome']['fastqs'],
+        reads=expand("reads/genome-resequencing/{fastqnoext}.fq.gz", fastqnoext=config['genome']['fastqs']),
         genome="resources/genome/genome.fa.gz",
         amb="resources/genome/genome.fa.gz.amb",
         ann="resources/genome/genome.fa.gz.ann",

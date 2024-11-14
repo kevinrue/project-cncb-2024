@@ -1,3 +1,4 @@
+qc/**
 results/**
 resources/**
 logs/**
@@ -5,3 +6,5 @@ logs/**
 .snakemake/**
 sps-*
 nohup.out
+.java/**
+.cache/**
