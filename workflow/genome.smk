@@ -3,7 +3,8 @@
 # Workflow wdl <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf.wdl>
 
 # Source 2
-# Workflow readme <
+# Workflow readme <https://github.com/broadinstitute/warp/tree/develop/pipelines/broad/dna_seq/germline/single_sample/wgs>
+# Workflow wdl <https://github.com/broadinstitute/warp/blob/develop/pipelines/broad/dna_seq/germline/single_sample/wgs/WholeGenomeGermlineSingleSample.wdl>
 
 def cmd_download_genome_fastas(config):
     tmp_dir = "tmp_genome"
