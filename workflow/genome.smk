@@ -82,54 +82,46 @@ rule map_reads_to_genome:
     wrapper:
         "v5.0.1/bio/bwa/mem"
 
-# rule map_reads_to_genome:
-#     input:
-#         reads=expand("reads/genome-resequencing/{fastqnoext}.fq.gz", fastqnoext=config['genome']['fastqs']),
-#         genome="resources/genome/genome.fa.gz",
-#         amb="resources/genome/genome.fa.gz.amb",
-#         ann="resources/genome/genome.fa.gz.ann",
-#         bwt="resources/genome/genome.fa.gz.bwt",
-#         pac="resources/genome/genome.fa.gz.pac",
-#         sa="resources/genome/genome.fa.gz.sa",
-#     output:
-#         "resources/genome_resequencing/mapped.bam",
-#     log:
-#         "logs/map_reads_to_genome.log",
-#     threads: 8
-#     resources:
-#         runtime="2h",
-#     shell:
-#         "(bwa mem"
-#         " -t {threads}"
-#         " -R '@RG\\tID:Gdna_1\\tSM:Gdna_1'"
-#         " {input.genome}"
-#         " {input.reads}"
-#         " | samtools view -@ {threads} -b - > {output}) 2> {log}"
-
 # Command <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1007>
 # ASSUME_SORT_ORDER="queryname" <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1022>
 rule mark_duplicates:
     input:
-        "results/genome/mapped.bam",
+        bams="results/genome/mapped.bam",
     output:
         bam="results/genome/mapped.dedup.bam",
         metrics="results/genome/mapped.dedup.metrics.txt",
     log:
-        out="logs/mark_duplicates.out",
-        err="logs/mark_duplicates.err",
+        "logs/mark_duplicates.log",
+    params:
+        extra="--VALIDATION_STRINGENCY SILENT --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 --ASSUME_SORT_ORDER queryname --CLEAR_DT false --ADD_PG_TAG_TO_READS false",
     resources:
+        mem_mb=1024,
         runtime="1h",
-    shell:
-        "picard MarkDuplicates"
-        " --INPUT {input}"
-        " --OUTPUT {output.bam}"
-        " --METRICS_FILE {output.metrics}"
-        " --VALIDATION_STRINGENCY SILENT"
-        " --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500"
-        " --ASSUME_SORT_ORDER \"queryname\""
-        " --CLEAR_DT \"false\""
-        " --ADD_PG_TAG_TO_READS false"
-        " > {log.out} 2> {log.err}"
+    wrapper:
+        "v5.1.0/bio/picard/markduplicates"
+
+# rule mark_duplicates:
+#     input:
+#         "results/genome/mapped.bam",
+#     output:
+#         bam="results/genome/mapped.dedup.bam",
+#         metrics="results/genome/mapped.dedup.metrics.txt",
+#     log:
+#         out="logs/mark_duplicates.out",
+#         err="logs/mark_duplicates.err",
+#     resources:
+#         runtime="1h",
+#     shell:
+#         "picard MarkDuplicates"
+#         " --INPUT {input}"
+#         " --OUTPUT {output.bam}"
+#         " --METRICS_FILE {output.metrics}"
+#         " --VALIDATION_STRINGENCY SILENT"
+#         " --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500"
+#         " --ASSUME_SORT_ORDER \"queryname\""
+#         " --CLEAR_DT \"false\""
+#         " --ADD_PG_TAG_TO_READS false"
+#         " > {log.out} 2> {log.err}"
 
 rule sort_bam:
     input:
