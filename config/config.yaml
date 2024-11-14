@@ -17,3 +17,6 @@ genome:
     - X
     - Y
     - mitochondrion_genome
+  fastqs:
+    - /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_1.fq.gz
+    - /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_2.fq.gz

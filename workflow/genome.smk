@@ -78,9 +78,7 @@ rule prepare_genome_bwa_index:
 
 rule map_reads_to_genome:
     input:
-        reads=[
-            "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_1.fq.gz",
-            "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_2.fq.gz"],
+        reads=config['genome']['fastqs'],
         genome="resources/genome/genome.fa.gz",
         amb="resources/genome/genome.fa.gz.amb",
         ann="resources/genome/genome.fa.gz.ann",
@@ -215,3 +213,34 @@ rule genotype_gvcfs:
         " -V {input.vcf}"
         " -O {output}"
         " > {log.out} 2> {log.err}"
+
+rule make_alternate_reference:
+    input:
+        genome="resources/genome/genome.fa.gz",
+        vcf="resources/genome_resequencing/mapped.dedup.sorted.merged.vcf.gz",
+    output:
+        fasta="resources/genome_resequencing/mapped.dedup.sorted.{interval}.fa.gz",
+    log:
+        out="logs/make_alternate_reference.{interval}.out",
+        err="logs/make_alternate_reference.{interval}.err",
+    resources:
+        runtime="4h",
+    shell:
+        "gatk FastaAlternateReferenceMaker"
+        " -R {input.genome}"
+        " -O {output.fasta}"
+        " -L {wildcards.interval}"
+        " -V {input.vcf}"
+        " > {log.out} 2> {log.err}"
+
+rule merge_alternate_fastas:
+    input:
+        expand("resources/genome_resequencing/mapped.dedup.sorted.{interval}.fa.gz", interval=config['genome']['intervals']),
+    output:
+        "resources/genome_resequencing/mapped.dedup.sorted.merged.fa.gz",
+    log:
+        err="logs/merge_alternate_fastas.err",
+    resources:
+        runtime="10m",
+    shell:
+        "zcat {input} | bgzip > {output} 2> {log.err}"
