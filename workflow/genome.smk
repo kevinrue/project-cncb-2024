@@ -50,22 +50,19 @@ rule prepare_genome_gatk_index:
         "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
         " samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"
 
+# Build BWA index for the combined genome FASTA file.
+# Necessary for mapping reads using BWA.
 rule prepare_genome_bwa_index:
     input:
         "resources/genome/genome.fa.gz",
     output:
-        "resources/genome/genome.fa.gz.amb",
-        "resources/genome/genome.fa.gz.ann",
-        "resources/genome/genome.fa.gz.bwt",
-        "resources/genome/genome.fa.gz.pac",
-        "resources/genome/genome.fa.gz.sa",
+        idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
-        out="logs/prepare_genome_bwa_index.out",
-        err="logs/prepare_genome_bwa_index.err",
-    shell:
-        "bwa index {input} > {log.out} 2> {log.err}"
+        "logs/prepare_genome_bwa_index.log",
+    wrapper:
+        "v5.1.0/bio/bwa/index"
 
-## The rule below uses a wrapper that seems to require 'conda' installed in the container
+# Map reads to the genome using BWA.
 rule map_reads_to_genome:
     input:
         reads=expand("reads/genome-resequencing/{fastq}", fastq=config['genome']['fastqs']),
