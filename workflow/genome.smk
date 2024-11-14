@@ -66,59 +66,57 @@ rule prepare_genome_bwa_index:
         "bwa index {input} > {log.out} 2> {log.err}"
 
 ## The rule below uses a wrapper that seems to require 'conda' installed in the container
+rule map_reads_to_genome:
+    input:
+        reads=expand("reads/genome-resequencing/{fastq}", fastq=config['genome']['fastqs']),
+        idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+    output:
+        "results/genome/mapped.bam",
+    log:
+        "logs/map_reads_to_genome.log",
+    params:
+        extra=r"-R '@RG\tID:Gdna_1\tSM:Gdna_1'",
+        sorting="none",  # Can be 'none', 'samtools' or 'picard'.
+        sort_order="queryname",  # Can be 'queryname' or 'coordinate'.
+        sort_extra="",  # Extra args for samtools/picard.
+    threads: 8
+    resources:
+        runtime="2h",
+    wrapper:
+        "v5.0.1/bio/bwa/mem"
+
 # rule map_reads_to_genome:
 #     input:
-#         reads=[
-#             "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_1.fq.gz",
-#             "/ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1/Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_2.fq.gz"],
-#         idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+#         reads=expand("reads/genome-resequencing/{fastqnoext}.fq.gz", fastqnoext=config['genome']['fastqs']),
+#         genome="resources/genome/genome.fa.gz",
+#         amb="resources/genome/genome.fa.gz.amb",
+#         ann="resources/genome/genome.fa.gz.ann",
+#         bwt="resources/genome/genome.fa.gz.bwt",
+#         pac="resources/genome/genome.fa.gz.pac",
+#         sa="resources/genome/genome.fa.gz.sa",
 #     output:
 #         "resources/genome_resequencing/mapped.bam",
 #     log:
 #         "logs/map_reads_to_genome.log",
-#     params:
-#         extra=r"-R '@RG\tID:Gdna_1\tSM:Gdna_1'",
-#         sorting="none",  # Can be 'none', 'samtools' or 'picard'.
-#         sort_order="queryname",  # Can be 'queryname' or 'coordinate'.
-#         sort_extra="",  # Extra args for samtools/picard.
 #     threads: 8
 #     resources:
 #         runtime="2h",
-#     wrapper:
-#         "v5.0.1/bio/bwa/mem"
-
-rule map_reads_to_genome:
-    input:
-        reads=expand("reads/genome-resequencing/{fastqnoext}.fq.gz", fastqnoext=config['genome']['fastqs']),
-        genome="resources/genome/genome.fa.gz",
-        amb="resources/genome/genome.fa.gz.amb",
-        ann="resources/genome/genome.fa.gz.ann",
-        bwt="resources/genome/genome.fa.gz.bwt",
-        pac="resources/genome/genome.fa.gz.pac",
-        sa="resources/genome/genome.fa.gz.sa",
-    output:
-        "resources/genome_resequencing/mapped.bam",
-    log:
-        "logs/map_reads_to_genome.log",
-    threads: 8
-    resources:
-        runtime="2h",
-    shell:
-        "(bwa mem"
-        " -t {threads}"
-        " -R '@RG\\tID:Gdna_1\\tSM:Gdna_1'"
-        " {input.genome}"
-        " {input.reads}"
-        " | samtools view -@ {threads} -b - > {output}) 2> {log}"
+#     shell:
+#         "(bwa mem"
+#         " -t {threads}"
+#         " -R '@RG\\tID:Gdna_1\\tSM:Gdna_1'"
+#         " {input.genome}"
+#         " {input.reads}"
+#         " | samtools view -@ {threads} -b - > {output}) 2> {log}"
 
 # Command <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1007>
 # ASSUME_SORT_ORDER="queryname" <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1022>
 rule mark_duplicates:
     input:
-        "resources/genome_resequencing/mapped.bam",
+        "results/genome/mapped.bam",
     output:
-        bam="resources/genome_resequencing/mapped.dedup.bam",
-        metrics="resources/genome_resequencing/mapped.dedup.metrics.txt",
+        bam="results/genome/mapped.dedup.bam",
+        metrics="results/genome/mapped.dedup.metrics.txt",
     log:
         out="logs/mark_duplicates.out",
         err="logs/mark_duplicates.err",
@@ -138,9 +136,9 @@ rule mark_duplicates:
 
 rule sort_bam:
     input:
-        "resources/genome_resequencing/mapped.dedup.bam",
+        "results/genome/mapped.dedup.bam",
     output:
-        "resources/genome_resequencing/mapped.dedup.sorted.bam",
+        "results/genome/mapped.dedup.sorted.bam",
     log:
         out="logs/sort_bam.out",
         err="logs/sort_bam.err",
@@ -159,13 +157,13 @@ rule sort_bam:
 rule haplotype_caller:
     input:
         genome="resources/genome/genome.fa.gz",
-        bam="resources/genome_resequencing/mapped.dedup.sorted.bam",
+        bam="results/genome/mapped.dedup.sorted.bam",
     output:
-        gvcf="resources/genome_sequencing/mapped.dedup.sorted.{interval}.gvcf",
-        bamout="resources/genome_sequencing/mapped.dedup.sorted.{interval}.bamout.bam",
+        gvcf="results/genome/intervals/mapped.dedup.sorted.{interval}.gvcf",
+        bamout="results/genome/intervals/mapped.dedup.sorted.{interval}.bamout.bam",
     log:
-        out="logs/haplotype_caller.{interval}.out",
-        err="logs/haplotype_caller.{interval}.err",
+        out="logs/haplotype_caller/{interval}.out",
+        err="logs/haplotype_caller/{interval}.err",
     resources:
         runtime="4h",
     shell:
@@ -186,16 +184,16 @@ rule haplotype_caller:
 def merge_gcvfs_inputs(config):
     cmd = ""
     for interval in config['genome']['intervals']:
-        cmd += f" -I resources/genome_resequencing/mapped.dedup.sorted.{interval}.gvcf"
+        cmd += f" -I results/genome/mapped.dedup.sorted.{interval}.gvcf"
     return cmd
 
 merge_gcvfs_inputs_str = merge_gcvfs_inputs(config)
 
 rule merge_gcvfs:
     input:
-        expand("resources/genome_resequencing/mapped.dedup.sorted.{interval}.gvcf", interval=config['genome']['intervals']),
+        expand("results/genome/intervals/mapped.dedup.sorted.{interval}.gvcf", interval=config['genome']['intervals']),
     output:
-        "resources/genome_resequencing/mapped.dedup.sorted.merged.g.vcf.gz",
+        "results/genome/mapped.dedup.sorted.merged.g.vcf.gz",
     log:
         out="logs/merge_gcvfs.out",
         err="logs/merge_gcvfs.err",
@@ -209,10 +207,10 @@ rule merge_gcvfs:
 
 rule genotype_gvcfs:
     input:
-        vcf="resources/genome_resequencing/mapped.dedup.sorted.merged.g.vcf.gz",
+        vcf="results/genome/mapped.dedup.sorted.merged.g.vcf.gz",
         genome="resources/genome/genome.fa.gz",
     output:
-        "resources/genome_resequencing/mapped.dedup.sorted.merged.vcf.gz",
+        "results/genome/mapped.dedup.sorted.merged.vcf.gz",
     log:
         out="logs/genotype_gvcfs.out",
         err="logs/genotype_gvcfs.err",
@@ -228,9 +226,9 @@ rule genotype_gvcfs:
 rule make_alternate_reference:
     input:
         genome="resources/genome/genome.fa.gz",
-        vcf="resources/genome_resequencing/mapped.dedup.sorted.merged.vcf.gz",
+        vcf="results/genome/mapped.dedup.sorted.merged.vcf.gz",
     output:
-        fasta="resources/genome_resequencing/mapped.dedup.sorted.{interval}.fa.gz",
+        fasta="results/genome/intervals/mapped.dedup.sorted.{interval}.fa.gz",
     log:
         out="logs/make_alternate_reference.{interval}.out",
         err="logs/make_alternate_reference.{interval}.err",
@@ -246,9 +244,9 @@ rule make_alternate_reference:
 
 rule merge_alternate_fastas:
     input:
-        expand("resources/genome_resequencing/mapped.dedup.sorted.{interval}.fa.gz", interval=config['genome']['intervals']),
+        expand("results/genome/intervals/mapped.dedup.sorted.{interval}.fa.gz", interval=config['genome']['intervals']),
     output:
-        "resources/genome_resequencing/mapped.dedup.sorted.merged.fa.gz",
+        "results/genome/mapped.dedup.sorted.merged.fa.gz",
     log:
         err="logs/merge_alternate_fastas.err",
     resources:
