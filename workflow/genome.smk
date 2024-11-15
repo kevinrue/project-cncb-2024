@@ -67,7 +67,7 @@ rule prepare_genome_bwa_index:
 # Map reads to the genome using BWA.
 rule map_reads_to_genome:
     input:
-        reads=expand("reads/genome-resequencing/{fastq}", fastq=config['genome']['fastqs']),
+        reads=expand("reads/genome/{fastq}", fastq=config['genome']['fastqs']),
         idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "results/genome/mapped.bam",
@@ -106,29 +106,6 @@ rule mark_duplicates:
         runtime="1h",
     wrapper:
         "v5.1.0/bio/picard/markduplicates"
-
-# rule mark_duplicates:
-#     input:
-#         "results/genome/mapped.bam",
-#     output:
-#         bam="results/genome/mapped.dedup.bam",
-#         metrics="results/genome/mapped.dedup.metrics.txt",
-#     log:
-#         out="logs/mark_duplicates.out",
-#         err="logs/mark_duplicates.err",
-#     resources:
-#         runtime="1h",
-#     shell:
-#         "picard MarkDuplicates"
-#         " --INPUT {input}"
-#         " --OUTPUT {output.bam}"
-#         " --METRICS_FILE {output.metrics}"
-#         " --VALIDATION_STRINGENCY SILENT"
-#         " --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500"
-#         " --ASSUME_SORT_ORDER \"queryname\""
-#         " --CLEAR_DT \"false\""
-#         " --ADD_PG_TAG_TO_READS false"
-#         " > {log.out} 2> {log.err}"
 
 rule sort_bam:
     input:
