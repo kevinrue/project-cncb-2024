@@ -6,46 +6,48 @@
 # Workflow readme <https://github.com/broadinstitute/warp/tree/develop/pipelines/broad/dna_seq/germline/single_sample/wgs>
 # Workflow wdl <https://github.com/broadinstitute/warp/blob/develop/pipelines/broad/dna_seq/germline/single_sample/wgs/WholeGenomeGermlineSingleSample.wdl>
 
-def cmd_download_genome_fastas(config):
+# Function called by rule: prepare_reference_genome_fasta
+def prepare_reference_genome_fasta_cmd(config):
+    # constants
     tmp_dir = "tmp_genome"
     curl_template_cmd = "curl {source_url} > {tmp_dir}/{basename} && "
+    # concatenate commands into a string
     cmd = f"mkdir -p {tmp_dir} && "
     for source_url in config["genome"]["fastas"]:
         basename = os.path.basename(source_url)
         cmd += curl_template_cmd.format(source_url=source_url, basename=basename, tmp_dir=tmp_dir)
-    cmd += f"zcat {tmp_dir}/*.fa.gz > resources/genome/genome.fa && "
-    cmd += "bgzip resources/genome/genome.fa && "
+    cmd += f"zcat {tmp_dir}/*.fa.gz | bgzip > resources/genome/reference.fa.gz && "
     cmd += f"rm -rf {tmp_dir}"
     return cmd
 
-cmd_download_genome_fastas_str = cmd_download_genome_fastas(config)
+prepare_reference_genome_fasta_cmd_str = prepare_reference_genome_fasta_cmd(config)
 
 # Download a list of genome FASTA files (see config/config.yaml).
 # Concatenate them into a single FASTA file.
 # Compress it.
 # See above for a function that generates the command (cmd_download_genome_fastas).
-rule prepare_genome_fasta:
+rule prepare_reference_genome_fasta:
     output:
-        "resources/genome/genome.fa.gz",
+        "resources/genome/reference.fa.gz",
     log:
-        "logs/prepare_genome_fasta.err",
+        "logs/prepare_reference_genome_fasta.log",
     shell:
-        "({cmd_download_genome_fastas_str}) 2> {log}"
+        "({prepare_reference_genome_fasta_cmd_str}) 2> {log}"
 
 # Build GATK index for the combined genome FASTA file.
 # Necessary for GATK tools.
-rule prepare_genome_gatk_index:
+rule index_reference_genome_for_gatk:
     input:
-        "resources/genome/genome.fa.gz",
+        "resources/genome/reference.fa.gz",
     output:
-        "resources/genome/genome.dict",
-        "resources/genome/genome.fa.gz.fai",
-        "resources/genome/genome.fa.gz.gzi",
+        "resources/genome/reference.dict",
+        "resources/genome/reference.fa.gz.fai",
+        "resources/genome/reference.fa.gz.gzi",
     log:
-        gatkout="logs/prepare_genome_gatk_index.gatk.out",
-        gatkerr="logs/prepare_genome_gatk_index.gatk.err",
-        samtoolkout="logs/prepare_genome_gatk_index.samtools.out",
-        samtoolserr="logs/prepare_genome_gatk_index.samtools.err",
+        gatkout="logs/index_reference_genome_for_gatk.gatk.out",
+        gatkerr="logs/index_reference_genome_for_gatk.gatk.err",
+        samtoolkout="logs/index_reference_genome_for_gatk.samtools.out",
+        samtoolserr="logs/index_reference_genome_for_gatk.samtools.err",
     shell:
         "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
         " samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"
@@ -54,9 +56,9 @@ rule prepare_genome_gatk_index:
 # Necessary for mapping reads using BWA.
 rule prepare_genome_bwa_index:
     input:
-        "resources/genome/genome.fa.gz",
+        "resources/genome/reference.fa.gz",
     output:
-        idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
         "logs/prepare_genome_bwa_index.log",
     wrapper:
@@ -66,7 +68,7 @@ rule prepare_genome_bwa_index:
 rule map_reads_to_genome:
     input:
         reads=expand("reads/genome-resequencing/{fastq}", fastq=config['genome']['fastqs']),
-        idx=multiext("resources/genome/genome.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "results/genome/mapped.bam",
     log:
@@ -93,7 +95,12 @@ rule mark_duplicates:
     log:
         "logs/mark_duplicates.log",
     params:
-        extra="--VALIDATION_STRINGENCY SILENT --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 --ASSUME_SORT_ORDER queryname --CLEAR_DT false --ADD_PG_TAG_TO_READS false",
+        extra=
+            " --VALIDATION_STRINGENCY SILENT"
+            " --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500"
+            " --ASSUME_SORT_ORDER queryname"
+            " --CLEAR_DT false"
+            " --ADD_PG_TAG_TO_READS false"
     resources:
         mem_mb=1024,
         runtime="1h",
@@ -145,7 +152,7 @@ rule sort_bam:
     
 rule haplotype_caller:
     input:
-        genome="resources/genome/genome.fa.gz",
+        genome="resources/genome/reference.fa.gz",
         bam="results/genome/mapped.dedup.sorted.bam",
     output:
         gvcf="results/genome/intervals/mapped.dedup.sorted.{interval}.gvcf",
@@ -197,7 +204,7 @@ rule merge_gcvfs:
 rule genotype_gvcfs:
     input:
         vcf="results/genome/mapped.dedup.sorted.merged.g.vcf.gz",
-        genome="resources/genome/genome.fa.gz",
+        genome="resources/genome/reference.fa.gz",
     output:
         "results/genome/mapped.dedup.sorted.merged.vcf.gz",
     log:
@@ -214,7 +221,7 @@ rule genotype_gvcfs:
 
 rule make_alternate_reference:
     input:
-        genome="resources/genome/genome.fa.gz",
+        genome="resources/genome/reference.fa.gz",
         vcf="results/genome/mapped.dedup.sorted.merged.vcf.gz",
     output:
         fasta="results/genome/intervals/mapped.dedup.sorted.{interval}.fa.gz",
