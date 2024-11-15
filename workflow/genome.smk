@@ -26,17 +26,17 @@ prepare_reference_genome_fasta_cmd_str = prepare_reference_genome_fasta_cmd(conf
 # Concatenate them into a single FASTA file.
 # Compress it.
 # See above for a function that generates the command (cmd_download_genome_fastas).
-rule prepare_reference_genome_fasta:
+rule genome_prepare_reference_fasta:
     output:
         "resources/genome/reference.fa.gz",
     log:
-        "logs/prepare_reference_genome_fasta.log",
+        "logs/genome_prepare_reference_fasta.log",
     shell:
         "({prepare_reference_genome_fasta_cmd_str}) 2> {log}"
 
 # Build GATK index for the combined genome FASTA file.
 # Necessary for GATK tools.
-rule index_reference_genome_for_gatk:
+rule genome_index_reference_for_gatk:
     input:
         "resources/genome/reference.fa.gz",
     output:
@@ -44,35 +44,35 @@ rule index_reference_genome_for_gatk:
         "resources/genome/reference.fa.gz.fai",
         "resources/genome/reference.fa.gz.gzi",
     log:
-        gatkout="logs/index_reference_genome_for_gatk.gatk.out",
-        gatkerr="logs/index_reference_genome_for_gatk.gatk.err",
-        samtoolkout="logs/index_reference_genome_for_gatk.samtools.out",
-        samtoolserr="logs/index_reference_genome_for_gatk.samtools.err",
+        gatkout="logs/genome_index_reference_for_gatk.gatk.out",
+        gatkerr="logs/genome_index_reference_for_gatk.gatk.err",
+        samtoolout="logs/genome_index_reference_for_gatk.samtools.out",
+        samtoolserr="logs/genome_index_reference_for_gatk.samtools.err",
     shell:
         "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
-        " samtools faidx {input} > {log.samtoolkout} 2> {log.samtoolserr}"
+        " samtools faidx {input} > {log.samtoolout} 2> {log.samtoolserr}"
 
 # Build BWA index for the combined genome FASTA file.
 # Necessary for mapping reads using BWA.
-rule index_reference_genome_for_bwa:
+rule genome_index_reference_for_bwa:
     input:
         "resources/genome/reference.fa.gz",
     output:
         idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
-        "logs/index_reference_genome_for_bwa.log",
+        "logs/genome_index_reference_for_bwa.log",
     wrapper:
         "v5.1.0/bio/bwa/index"
 
 # Map DNA-resequencing reads to the genome using BWA.
-rule map_dna_resequencing_reads:
+rule genome_map_reads:
     input:
         reads=expand("reads/genome/{fastq}", fastq=config['genome']['fastqs']),
         idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "results/genome/mapped.bam",
     log:
-        "logs/map_dna_resequencing_reads.log",
+        "logs/genome_map_reads.log",
     params:
         extra=r"-R '@RG\tID:Gdna_1\tSM:Gdna_1'",
         sorting="none",  # Can be 'none', 'samtools' or 'picard'.
@@ -86,14 +86,14 @@ rule map_dna_resequencing_reads:
 
 # Command <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1007>
 # ASSUME_SORT_ORDER="queryname" <https://github.com/gatk-workflows/broad-prod-wgs-germline-snps-indels/blob/master/PairedEndSingleSampleWf-fc-hg38.wdl#L1022>
-rule mark_duplicates:
+rule genome_mark_duplicates:
     input:
         bams="results/genome/mapped.bam",
     output:
         bam="results/genome/mapped.dedup.bam",
         metrics="results/genome/mapped.dedup.metrics.txt",
     log:
-        "logs/mark_duplicates.log",
+        "logs/genome_mark_duplicates.log",
     params:
         extra=
             " --VALIDATION_STRINGENCY SILENT"
@@ -127,29 +127,46 @@ rule mark_duplicates:
 #         " --MAX_RECORDS_IN_RAM 300000"
 #         " > {log.out} 2> {log.err}"
 
-rule sort_dna_resequencing_bam:
+rule genome_sort_bam:
     input:
         "results/genome/mapped.dedup.bam",
     output:
         "results/genome/mapped.dedup.sorted.bam",
     log:
-        log="logs/sort_dna_resequencing_bam.log",
+        log="logs/genome_sort_bam.log",
     resources:
         runtime="30m",
     threads: 8
     wrapper:
         "v5.1.0/bio/samtools/sort"
+
+rule genome_index_bam:
+    input:
+        "results/genome/mapped.dedup.sorted.bam",
+    output:
+        "results/genome/mapped.dedup.sorted.bam.bai",
+    log:
+        "logs/genome_index_bam.log",
+    params:
+        extra="",
+    resources:
+        runtime="30m",
+    threads: 8
+    wrapper:
+        "v5.1.0/bio/samtools/index"
     
-rule haplotype_caller:
+rule genome_haplotype_caller:
     input:
         genome="resources/genome/reference.fa.gz",
+        fai="resources/genome/reference.fa.gz.fai",
         bam="results/genome/mapped.dedup.sorted.bam",
+        bai="results/genome/mapped.dedup.sorted.bam.bai",
     output:
-        gvcf="results/genome/intervals/mapped.dedup.sorted.{interval}.gvcf",
-        bamout="results/genome/intervals/mapped.dedup.sorted.{interval}.bamout.bam",
+        gvcf="results/genome/intervals/haplotype_caller.{interval}.gvcf",
+        bamout="results/genome/intervals/haplotype_caller.{interval}.bamout.bam",
     log:
-        out="logs/haplotype_caller/{interval}.out",
-        err="logs/haplotype_caller/{interval}.err",
+        out="logs/genome_haplotype_caller/haplotype_caller.{interval}.out",
+        err="logs/genome_haplotype_caller/haplotype_caller.{interval}.err",
     resources:
         runtime="4h",
     shell:
@@ -170,19 +187,19 @@ rule haplotype_caller:
 def merge_gcvfs_inputs(config):
     cmd = ""
     for interval in config['genome']['intervals']:
-        cmd += f" -I results/genome/mapped.dedup.sorted.{interval}.gvcf"
+        cmd += f" -I results/genome/intervals/haplotype_caller.{interval}.gvcf"
     return cmd
 
 merge_gcvfs_inputs_str = merge_gcvfs_inputs(config)
 
-rule merge_gcvfs:
+rule genome_merge_gcvfs:
     input:
-        expand("results/genome/intervals/mapped.dedup.sorted.{interval}.gvcf", interval=config['genome']['intervals']),
+        expand("results/genome/intervals/haplotype_caller.{interval}.gvcf", interval=config['genome']['intervals']),
     output:
-        "results/genome/mapped.dedup.sorted.merged.g.vcf.gz",
+        "results/genome/haplotype_caller.merged.g.vcf.gz",
     log:
-        out="logs/merge_gcvfs.out",
-        err="logs/merge_gcvfs.err",
+        out="logs/genome_merge_gcvfs.out",
+        err="logs/genome_merge_gcvfs.err",
     resources:
         runtime="10m",
     shell:
@@ -191,15 +208,15 @@ rule merge_gcvfs:
         " -O {output}"
         " > {log.out} 2> {log.err}"
 
-rule genotype_gvcfs:
+rule genome_genotype_gvcfs:
     input:
-        vcf="results/genome/mapped.dedup.sorted.merged.g.vcf.gz",
+        vcf="results/genome/haplotype_caller.merged.g.vcf.gz",
         genome="resources/genome/reference.fa.gz",
     output:
-        "results/genome/mapped.dedup.sorted.merged.vcf.gz",
+        "results/genome/genotype.merged.vcf.gz",
     log:
-        out="logs/genotype_gvcfs.out",
-        err="logs/genotype_gvcfs.err",
+        out="logs/genome_genotype_gvcfs.out",
+        err="logs/genome_genotype_gvcfs.err",
     resources:
         runtime="10m",
     shell:
@@ -209,15 +226,15 @@ rule genotype_gvcfs:
         " -O {output}"
         " > {log.out} 2> {log.err}"
 
-rule make_alternate_reference:
+rule genome_make_alternate_reference:
     input:
         genome="resources/genome/reference.fa.gz",
-        vcf="results/genome/mapped.dedup.sorted.merged.vcf.gz",
+        vcf="results/genome/genotype.merged.vcf.gz",
     output:
-        fasta="results/genome/intervals/mapped.dedup.sorted.{interval}.fa.gz",
+        fasta="results/genome/intervals/alternate_reference.{interval}.fa.gz",
     log:
-        out="logs/make_alternate_reference.{interval}.out",
-        err="logs/make_alternate_reference.{interval}.err",
+        out="logs/genome_make_alternate_reference.{interval}.out",
+        err="logs/genome_make_alternate_reference.{interval}.err",
     resources:
         runtime="4h",
     shell:
@@ -228,13 +245,13 @@ rule make_alternate_reference:
         " -V {input.vcf}"
         " > {log.out} 2> {log.err}"
 
-rule merge_alternate_fastas:
+rule genome_merge_alternate_reference_fastas:
     input:
-        expand("results/genome/intervals/mapped.dedup.sorted.{interval}.fa.gz", interval=config['genome']['intervals']),
+        expand("results/genome/intervals/alternate_reference.{interval}.fa.gz", interval=config['genome']['intervals']),
     output:
-        "results/genome/mapped.dedup.sorted.merged.fa.gz",
+        "results/genome/alternate_reference.merged.fa.gz",
     log:
-        err="logs/merge_alternate_fastas.err",
+        err="logs/genome_merge_alternate_reference_fastas.err",
     resources:
         runtime="10m",
     shell:

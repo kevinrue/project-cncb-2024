@@ -18,5 +18,5 @@ include: "genome_qc.smk"
 ##### main rule #####
 rule all:
     input:
-        "resources/genome_resequencing/mapped.dedup.sorted.merged.fa.gz",
+        "results/genome/alternate_reference.merged.fa.gz",
         "qc/genome/multiqc/multiqc_report.html",
