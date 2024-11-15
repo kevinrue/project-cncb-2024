@@ -54,25 +54,25 @@ rule index_reference_genome_for_gatk:
 
 # Build BWA index for the combined genome FASTA file.
 # Necessary for mapping reads using BWA.
-rule prepare_genome_bwa_index:
+rule index_reference_genome_for_bwa:
     input:
         "resources/genome/reference.fa.gz",
     output:
         idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
-        "logs/prepare_genome_bwa_index.log",
+        "logs/index_reference_genome_for_bwa.log",
     wrapper:
         "v5.1.0/bio/bwa/index"
 
-# Map reads to the genome using BWA.
-rule map_reads_to_genome:
+# Map DNA-resequencing reads to the genome using BWA.
+rule map_dna_resequencing_reads:
     input:
         reads=expand("reads/genome/{fastq}", fastq=config['genome']['fastqs']),
         idx=multiext("resources/genome/reference.fa.gz", ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "results/genome/mapped.bam",
     log:
-        "logs/map_reads_to_genome.log",
+        "logs/map_dna_resequencing_reads.log",
     params:
         extra=r"-R '@RG\tID:Gdna_1\tSM:Gdna_1'",
         sorting="none",  # Can be 'none', 'samtools' or 'picard'.
@@ -107,25 +107,38 @@ rule mark_duplicates:
     wrapper:
         "v5.1.0/bio/picard/markduplicates"
 
-rule sort_bam:
+# rule sort_bam:
+#     input:
+#         "results/genome/mapped.dedup.bam",
+#     output:
+#         "results/genome/mapped.dedup.sorted.bam",
+#     log:
+#         out="logs/sort_bam.out",
+#         err="logs/sort_bam.err",
+#     resources:
+#         runtime="2h",
+#     shell:
+#         "picard SortSam"
+#         " --INPUT {input}"
+#         " --OUTPUT {output}"
+#         " --SORT_ORDER coordinate"
+#         " --CREATE_INDEX true"
+#         " --CREATE_MD5_FILE true"
+#         " --MAX_RECORDS_IN_RAM 300000"
+#         " > {log.out} 2> {log.err}"
+
+rule sort_dna_resequencing_bam:
     input:
         "results/genome/mapped.dedup.bam",
     output:
         "results/genome/mapped.dedup.sorted.bam",
     log:
-        out="logs/sort_bam.out",
-        err="logs/sort_bam.err",
+        log="logs/sort_dna_resequencing_bam.log",
     resources:
-        runtime="2h",
-    shell:
-        "picard SortSam"
-        " --INPUT {input}"
-        " --OUTPUT {output}"
-        " --SORT_ORDER coordinate"
-        " --CREATE_INDEX true"
-        " --CREATE_MD5_FILE true"
-        " --MAX_RECORDS_IN_RAM 300000"
-        " > {log.out} 2> {log.err}"
+        runtime="30m",
+    threads: 8
+    wrapper:
+        "v5.1.0/bio/samtools/sort"
     
 rule haplotype_caller:
     input:
