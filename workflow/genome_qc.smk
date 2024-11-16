@@ -16,6 +16,7 @@ rule genome_mapping_qc:
 rule genome_multiqc:
     input:
         expand("qc/genome/fastqc/{fastqnoext}_fastqc.zip", fastqnoext=genome_fastqs_noext),
+        "results/genome/alternate_reference.merged.fa.gz",
     output:
         "qc/genome/multiqc/multiqc_report.html",
     log:
@@ -25,6 +26,8 @@ rule genome_multiqc:
         mem_mb = 1024,
     shell:
         "multiqc"
+        " resources/genome"
+        " results/genome"
         " qc/genome/fastqc"
         " -o qc/genome/multiqc"
         " 2> {log}"
