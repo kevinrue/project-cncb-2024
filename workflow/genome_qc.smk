@@ -1,17 +1,17 @@
-rule genome_mapping_qc:
+rule genome_reads_qc:
     input:
-        "reads/genome-resequencing/{fastqnoext}.fq.gz",
+        "reads/genome/{fastqnoext}.fq.gz",
     output:
         html="qc/genome/fastqc/{fastqnoext}.html",
         zip="qc/genome/fastqc/{fastqnoext}_fastqc.zip"
     log:
-        "logs/genome_mapping_qc/{fastqnoext}.log",
+        "logs/genome/fastqc/{fastqnoext}.log",
     threads: 8
     resources:
         runtime="1h",
         mem_mb = 1024,
     wrapper:
-        "v5.0.2/bio/fastqc"
+        "v5.1.0/bio/fastqc"
 
 rule genome_multiqc:
     input:
@@ -20,7 +20,8 @@ rule genome_multiqc:
     output:
         "qc/genome/multiqc/multiqc_report.html",
     log:
-        "logs/genome_multiqc.log",
+        out="logs/genome/multiqc.out",
+        err="logs/genome/multiqc.err",
     resources:
         runtime="10m",
         mem_mb = 1024,
@@ -30,4 +31,5 @@ rule genome_multiqc:
         " results/genome"
         " qc/genome/fastqc"
         " -o qc/genome/multiqc"
-        " 2> {log}"
+        " --force"
+        " > {log.out} 2> {log.err}"
