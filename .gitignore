@@ -1,7 +1,9 @@
+af_home/**
 qc/**
 results/**
 resources/**
 logs/**
+workdir.noindex/**
 .snakemake
 .snakemake/**
 sps-*
