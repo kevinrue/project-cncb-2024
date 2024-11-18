@@ -1,0 +1,28 @@
+---
+title: "Compare alternate genome"
+author: "Kevin Rue"
+format: html
+editor: source
+---
+
+## Libraries
+
+```{r}
+library(Biostrings)
+```
+
+## Import genomes
+
+Reference genome
+
+```{r}
+reference <- readDNAStringSet(filepath = "../resources/genome/reference.fa.gz")
+reference
+```
+
+Alternate genome
+
+```{r}
+#| eval: false
+alternate <- readDNAStringSet(filepath = "../results/genome/alternate_reference.merged.fa.gz")
+```
