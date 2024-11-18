@@ -34,6 +34,7 @@ rule genome_prepare_reference_fasta:
     resources:
         mem="8G",
         runtime="5m",
+    threads: 1
     shell:
         "({prepare_reference_genome_fasta_cmd_str}) 2> {log}"
 
@@ -54,6 +55,7 @@ rule genome_index_reference_for_gatk:
     resources:
         mem="8G",
         runtime="5m",
+    threads: 1
     shell:
         "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
         " samtools faidx {input} > {log.samtoolout} 2> {log.samtoolserr}"
@@ -70,6 +72,7 @@ rule genome_index_reference_for_bwa:
     resources:
         mem="8G",
         runtime="5m",
+    threads: 1
     wrapper:
         "v5.1.0/bio/bwa/index"
 
@@ -87,10 +90,10 @@ rule genome_map_reads:
         sorting="none",  # Can be 'none', 'samtools' or 'picard'.
         sort_order="queryname",  # Can be 'queryname' or 'coordinate'.
         sort_extra="",  # Extra args for samtools/picard.
-    threads: 8
     resources:
         mem="8G",
         runtime="2h",
+    threads: 8
     wrapper:
         "v5.0.1/bio/bwa/mem"
 
@@ -114,6 +117,7 @@ rule genome_mark_duplicates:
     resources:
         mem="8G",
         runtime="1h",
+    threads: 1
     wrapper:
         "v5.1.0/bio/picard/markduplicates"
 
@@ -162,6 +166,7 @@ rule genome_haplotype_caller:
     resources:
         mem="8G",
         runtime="4h",
+    threads: 2
     shell:
         "gatk HaplotypeCaller"
         " -R {input.genome}"
@@ -196,6 +201,7 @@ rule genome_merge_gcvfs:
     resources:
         mem="8G",
         runtime="15m",
+    threads: 2
     shell:
         "gatk SortVcf"
         " {merge_gcvfs_inputs_str}"
@@ -214,6 +220,7 @@ rule genome_genotype_gvcfs:
     resources:
         mem="8G",
         runtime="10m",
+    threads: 2
     shell:
         "gatk GenotypeGVCFs"
         " -R {input.genome}"
@@ -233,6 +240,7 @@ rule genome_make_alternate_reference:
     resources:
         mem="8G",
         runtime="10m",
+    threads: 2
     shell:
         "gatk FastaAlternateReferenceMaker"
         " -R {input.genome}"
@@ -251,5 +259,6 @@ rule genome_merge_alternate_reference_fastas:
     resources:
         mem="2G",
         runtime="10m",
+    threads: 1
     shell:
         "zcat {input} | bgzip > {output} 2> {log}"

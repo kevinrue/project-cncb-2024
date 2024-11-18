@@ -11,6 +11,7 @@ genome_fastqs_noext = [file.replace('.fq.gz', '') for file in config['genome']['
 
 ##### load rules #####
 
+include: "alevin.smk"
 include: "common.smk"
 include: "genome.smk"
 include: "genome_qc.smk"
@@ -20,3 +21,4 @@ rule all:
     input:
         "results/genome/alternate_reference.merged.fa.gz",
         "qc/genome/multiqc/multiqc_report.html",
+        "resources/genome/index/alevin",

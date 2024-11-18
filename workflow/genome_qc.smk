@@ -6,10 +6,10 @@ rule genome_reads_qc:
         zip="qc/genome/fastqc/{fastqnoext}_fastqc.zip"
     log:
         "logs/genome/fastqc/{fastqnoext}.log",
-    threads: 8
     resources:
         mem="8G",
         runtime="1h",
+    threads: 8
     wrapper:
         "v5.1.0/bio/fastqc"
 
@@ -25,6 +25,7 @@ rule genome_multiqc:
     resources:
         mem="2G",
         runtime="10m",
+    threads: 1
     shell:
         "multiqc"
         " resources/genome"
