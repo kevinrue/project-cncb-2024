@@ -20,3 +20,4 @@ genome:
   fastqs:
     - Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_1.fq.gz
     - Gdna_1_EKDN240047675-1A_22FVLJLT4_L5_2.fq.gz
+  gtf: https://ftp.ensembl.org/pub/release-113/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.113.gtf.gz

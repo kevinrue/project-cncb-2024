@@ -108,7 +108,7 @@ rule genome_mark_duplicates:
             " --CLEAR_DT false"
             " --ADD_PG_TAG_TO_READS false"
     resources:
-        mem_mb=1024,
+        mem_gb=10,
         runtime="1h",
     wrapper:
         "v5.1.0/bio/picard/markduplicates"
