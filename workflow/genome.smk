@@ -32,6 +32,7 @@ rule genome_prepare_reference_fasta:
     log:
         "logs/genome/prepare_reference_fasta.log",
     resources:
+        mem="8G",
         runtime="5m",
     shell:
         "({prepare_reference_genome_fasta_cmd_str}) 2> {log}"
@@ -51,6 +52,7 @@ rule genome_index_reference_for_gatk:
         samtoolout="logs/genome/index_reference_for_gatk.samtools.out",
         samtoolserr="logs/genome/index_reference_for_gatk.samtools.err",
     resources:
+        mem="8G",
         runtime="5m",
     shell:
         "gatk CreateSequenceDictionary -R {input} > {log.gatkout} 2> {log.gatkerr} &&"
@@ -66,6 +68,7 @@ rule genome_index_reference_for_bwa:
     log:
         "logs/genome/index_reference_for_bwa.log",
     resources:
+        mem="8G",
         runtime="5m",
     wrapper:
         "v5.1.0/bio/bwa/index"
@@ -86,6 +89,7 @@ rule genome_map_reads:
         sort_extra="",  # Extra args for samtools/picard.
     threads: 8
     resources:
+        mem="8G",
         runtime="2h",
     wrapper:
         "v5.0.1/bio/bwa/mem"
@@ -108,7 +112,7 @@ rule genome_mark_duplicates:
             " --CLEAR_DT false"
             " --ADD_PG_TAG_TO_READS false"
     resources:
-        mem_gb=10,
+        mem="8G",
         runtime="1h",
     wrapper:
         "v5.1.0/bio/picard/markduplicates"
@@ -121,6 +125,7 @@ rule genome_sort_bam:
     log:
         log="logs/genome/sort_bam.log",
     resources:
+        mem="8G",
         runtime="30m",
     threads: 8
     wrapper:
@@ -136,6 +141,7 @@ rule genome_index_bam:
     params:
         extra="",
     resources:
+        mem="8G",
         runtime="30m",
     threads: 8
     wrapper:
@@ -154,6 +160,7 @@ rule genome_haplotype_caller:
         out="logs/genome/haplotype_caller/HaplotypeCaller.{interval}.out",
         err="logs/genome/haplotype_caller/HaplotypeCaller.{interval}.err",
     resources:
+        mem="8G",
         runtime="4h",
     shell:
         "gatk HaplotypeCaller"
@@ -187,6 +194,7 @@ rule genome_merge_gcvfs:
         out="logs/genome/merge_gcvfs.out",
         err="logs/genome/merge_gcvfs.err",
     resources:
+        mem="8G",
         runtime="15m",
     shell:
         "gatk SortVcf"
@@ -204,6 +212,7 @@ rule genome_genotype_gvcfs:
         out="logs/genome/genotype_gvcfs.out",
         err="logs/genome/genotype_gvcfs.err",
     resources:
+        mem="8G",
         runtime="10m",
     shell:
         "gatk GenotypeGVCFs"
@@ -222,6 +231,7 @@ rule genome_make_alternate_reference:
         out="logs/genome/make_alternate_reference/FastaAlternateReferenceMaker.{interval}.out",
         err="logs/genome/make_alternate_reference/FastaAlternateReferenceMaker.{interval}.err",
     resources:
+        mem="8G",
         runtime="10m",
     shell:
         "gatk FastaAlternateReferenceMaker"
@@ -239,6 +249,7 @@ rule genome_merge_alternate_reference_fastas:
     log:
         "logs/genome/merge_alternate_reference_fastas.log",
     resources:
+        mem="2G",
         runtime="10m",
     shell:
         "zcat {input} | bgzip > {output} 2> {log}"

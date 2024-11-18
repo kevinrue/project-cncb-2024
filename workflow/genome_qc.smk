@@ -8,8 +8,8 @@ rule genome_reads_qc:
         "logs/genome/fastqc/{fastqnoext}.log",
     threads: 8
     resources:
+        mem="8G",
         runtime="1h",
-        mem_mb=8192,
     wrapper:
         "v5.1.0/bio/fastqc"
 
@@ -23,8 +23,8 @@ rule genome_multiqc:
         out="logs/genome/multiqc.out",
         err="logs/genome/multiqc.err",
     resources:
+        mem="2G",
         runtime="10m",
-        mem_mb=1024,
     shell:
         "multiqc"
         " resources/genome"

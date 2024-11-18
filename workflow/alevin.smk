@@ -20,6 +20,7 @@ rule download_gtf:
     log:
         "logs/genome/download_gtf.log",
     resources:
+        mem="2G",
         runtime="5m",
     shell:
         "({download_gtf_cmd_str}) 2> {log}"
@@ -34,8 +35,8 @@ rule alevin_build_reference_index:
         "logs/genome/alevin/build_reference_index.log",
     threads: 16
     resources:
+        mem="8G",
         runtime="1h",
-        mem_gb=10,
     shell:
         "export ALEVIN_FRY_HOME=af_home &&"
         " simpleaf set-paths &&"
