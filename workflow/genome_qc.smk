@@ -2,14 +2,14 @@ rule genome_reads_qc:
     input:
         "reads/genome/{fastqnoext}.fq.gz",
     output:
-        html="qc/genome/fastqc/{fastqnoext}.html",
+        html="qc/genome/fastqc/{fastqnoext}_fastqc.html",
         zip="qc/genome/fastqc/{fastqnoext}_fastqc.zip"
     log:
         "logs/genome/fastqc/{fastqnoext}.log",
     threads: 8
     resources:
         runtime="1h",
-        mem_mb = 1024,
+        mem_mb=8192,
     wrapper:
         "v5.1.0/bio/fastqc"
 
@@ -24,7 +24,7 @@ rule genome_multiqc:
         err="logs/genome/multiqc.err",
     resources:
         runtime="10m",
-        mem_mb = 1024,
+        mem_mb=1024,
     shell:
         "multiqc"
         " resources/genome"
