@@ -37,17 +37,20 @@ rule alevin_build_reference_index:
     threads: 16
     resources:
         mem="8G",
-        runtime="6h",
+        runtime="4h",
     shell:
-        "export ALEVIN_FRY_HOME=af_home &&"
+        "jobdir=$(pwd) &&"
+        " cd $TMPDIR &&"
+        " export ALEVIN_FRY_HOME=af_home &&"
         " simpleaf set-paths &&"
-        " gunzip -c {input.genome} > tmp_reference.fa  &&"
+        " gunzip -c $jobdir/{input.genome} > tmp_reference.fa  &&"
         " simpleaf index"
-        " --output {output.index}"
+        " --output tmp_alevin_index"
         " --fasta tmp_reference.fa"
-        " --gtf {input.gtf}"
+        " --gtf $jobdir/{input.gtf}"
         " --rlen 150"
-        " --threads 16"
+        " --threads {threads}"
         " --use-piscem"
-        " > {log.out} 2> {log.err} &&"
+        " > $jobdir/{log.out} 2> $jobdir/{log.err} &&"
+        " mv tmp_alevin_index $jobdir/{output.index} &&"
         " rm tmp_reference.fa"

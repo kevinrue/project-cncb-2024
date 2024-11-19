@@ -164,7 +164,7 @@ rule genome_haplotype_caller:
         out="logs/genome/haplotype_caller/HaplotypeCaller.{interval}.out",
         err="logs/genome/haplotype_caller/HaplotypeCaller.{interval}.err",
     resources:
-        mem="8G",
+        mem="16G",
         runtime="4h",
     threads: 2
     shell:
