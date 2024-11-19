@@ -32,7 +32,8 @@ rule alevin_build_reference_index:
     output:
         index=directory("resources/genome/index/alevin"),
     log:
-        "logs/genome/alevin/build_reference_index.log",
+        out="logs/genome/alevin/build_reference_index.out",
+        err="logs/genome/alevin/build_reference_index.err",
     threads: 16
     resources:
         mem="8G",
@@ -47,5 +48,6 @@ rule alevin_build_reference_index:
         " --gtf {input.gtf}"
         " --rlen 150"
         " --threads 16"
-        " --use-piscem &&"
+        " --use-piscem"
+        " > {log.out} 2> {log.err} &&"
         " rm tmp_reference.fa"
