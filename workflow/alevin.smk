@@ -37,7 +37,7 @@ rule alevin_build_reference_index:
     threads: 16
     resources:
         mem="8G",
-        runtime="1h",
+        runtime="6h",
     shell:
         "export ALEVIN_FRY_HOME=af_home &&"
         " simpleaf set-paths &&"

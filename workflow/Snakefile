@@ -3,7 +3,7 @@
 # https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
 # in particular regarding the standardized folder structure mentioned there. 
 
-container: "library://kevinrue/cncb/cncb:latest"
+container: "library://kevinrue/cncb/cncb-2:latest"
 
 configfile: "config/config.yaml"
 
