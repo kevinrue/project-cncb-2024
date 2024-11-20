@@ -1,3 +1,8 @@
+import pandas
+import os.path
+
+SAMPLES=pandas.read_csv('config/samples.tsv', sep='\t')
+
 def get_final_output():
     intervals = config['genome']['intervals']
     final_output = expand(

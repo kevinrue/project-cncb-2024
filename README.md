@@ -36,5 +36,5 @@ Environment:
 cd $(realpath .) # containers prefer real paths
 nohup snakemake \
   --sdm apptainer \
-  --apptainer-args "--bind /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing/genome/download/X204SC24080649-Z01-F001/01.RawData/Gdna_1" &
+  --apptainer-args "--bind /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing" &
 ```

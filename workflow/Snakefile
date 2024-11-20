@@ -22,3 +22,4 @@ rule all:
         "results/genome/alternate_reference.merged.fa.gz",
         "qc/genome/multiqc/multiqc_report.html",
         "resources/genome/index/alevin",
+        expand("results/alevin/{sample}", sample=SAMPLES['sample_name'].unique()),
