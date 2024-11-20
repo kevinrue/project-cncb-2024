@@ -34,7 +34,9 @@ Environment:
 
 ```
 cd $(realpath .) # containers prefer real paths
+TMP_APPTAINER_ARGS="--bind /var/scratch"
+TMP_APPTAINER_ARGS+=" --bind /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing"
 nohup snakemake \
   --sdm apptainer \
-  --apptainer-args "--bind /ceph/project/cncb/shared/proj140/analyses/novogene_sequencing" &
+  --apptainer-args "$TMP_APPTAINER_ARGS" &
 ```
