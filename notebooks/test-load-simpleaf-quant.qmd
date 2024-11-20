@@ -1,0 +1,114 @@
+---
+title: "Load a single sample using fishpond"
+format: html
+---
+
+Source: <https://combine-lab.github.io/alevin-fry-tutorials/2023/simpleaf-piscem/> (step 3)
+
+## Libraries
+
+```{r}
+library(BiocSingular)
+library(cowplot)
+library(ggplot2)
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+library(scuttle)
+```
+
+
+## Load data for one sample
+
+```{r}
+sce <- fishpond::loadFry(
+  fryDir = "/ceph/project/cncb/albrecht/snakemake-cncb-2024/results/alevin/WPPm024hrs_rep1/af_quant/",
+  outputFormat = "scRNA"
+)
+```
+
+```{r}
+sce
+```
+
+## Basic quality control
+
+```{r}
+colData(sce)[["sum"]] <- colSums(assay(sce, "counts"))
+```
+
+```{r}
+table(sce$sum == 0)
+```
+
+```{r}
+#| fig-width: 12
+#| fig-height: 4
+gg1 <- ggplot(colData(sce), aes(x = sum)) +
+  geom_histogram(bins = 100)
+gg2 <- ggplot(colData(sce), aes(x = sum)) +
+  geom_histogram(binwidth = 100) +
+  coord_cartesian(xlim = c(0, 5E3))
+plot_grid(gg1, gg2)
+```
+
+```{r}
+sce <- sce[, sce$sum > 500]
+sce
+```
+
+
+## Naive downstream analysis
+
+```{r}
+sce <- logNormCounts(sce)
+sce
+```
+
+```{r}
+dec <- modelGeneVar(sce)
+dec
+```
+
+```{r}
+fit <- metadata(dec)
+plot(fit$mean, fit$var, xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(fit$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+```
+
+```{r}
+chosen <- getTopHVGs(dec, prop=0.1)
+str(chosen)
+```
+
+```{r}
+set.seed(100) # See below.
+sce <- fixedPCA(sce, subset.row=chosen) 
+reducedDimNames(sce)
+```
+
+```{r}
+set.seed(1100101001)
+sce <- runUMAP(sce, dimred="PCA")
+plotReducedDim(sce, dimred="UMAP")
+```
+
+```{r}
+colData(sce)[["NN.clusters"]] <- clusterCells(sce, use.dimred="PCA")
+table(sce$NN.clusters)
+```
+
+```{r}
+plotReducedDim(sce, "UMAP", colour_by="NN.clusters")
+```
+
+```{r}
+marker.info <- scoreMarkers(sce, sce$NN.clusters)
+marker.info
+```
+
+```{r}
+marker.info[[11]]
+```
+

@@ -6,6 +6,7 @@ logs/**
 workdir.noindex/**
 .snakemake
 .snakemake/**
+slurm-*.out
 sps-*
 nohup.out
 .java/**

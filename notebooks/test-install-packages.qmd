@@ -1,0 +1,48 @@
+---
+title: "Install packages"
+format: html
+---
+
+## Set up library path
+
+```{r}
+.libPaths("/ceph/project/cncb/albrecht/R-4.4.1")
+.libPaths()
+```
+
+
+## Install package dependencies
+
+```{r}
+install.packages("BiocManager")
+```
+
+```{r}
+BiocManager::version()
+```
+
+```{r}
+BiocManager::install(c("fishpond"))
+```
+
+```{r}
+install.packages("rmarkdown")
+```
+
+```{r}
+BiocManager::install(
+  pkgs = c(
+    "cowplot",
+    "DelayedMatrixStats",
+    "DropletUtils",
+    "iSEE",
+    "Rtsne",
+    "scran",
+    "scater",
+    "tidyverse",
+    "uwot"
+  ),
+  Ncpus = 2L
+)
+```
+
