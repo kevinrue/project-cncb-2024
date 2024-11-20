@@ -57,21 +57,20 @@ rule alevin_build_reference_index:
 
 # Function used by rule: alevin_quant
 def get_alevin_quant_input_fastqs(wildcards):
-    sample_fastqs_info=SAMPLES[SAMPLES['sample_name'] == 'WPPm048hrs_rep1'].filter(items=['directory', 'R1', 'R2'])
-    fq1=[os.path.join(os.path.realpath(sample_fastqs_info['directory'][i]), sample_fastqs_info['R1'][i]) for i in range(sample_fastqs_info.shape[0])]
-    fq2=[os.path.join(os.path.realpath(sample_fastqs_info['directory'][i]), sample_fastqs_info['R2'][i]) for i in range(sample_fastqs_info.shape[0])]
+    sample_fastqs_info=SAMPLES[SAMPLES['sample_name'] == wildcards.sample].filter(items=['directory', 'R1', 'R2'])
+    fq1=[os.path.join(os.path.realpath(sample_fastqs_info['directory'][i]), sample_fastqs_info['R1'][i]) for i in sample_fastqs_info.index]
+    fq2=[os.path.join(os.path.realpath(sample_fastqs_info['directory'][i]), sample_fastqs_info['R2'][i]) for i in sample_fastqs_info.index]
     return {
         'fq1': fq1,
         'fq2': fq2,
     }
-
 
 rule alevin_quant:
     input:
         unpack(get_alevin_quant_input_fastqs),
         index="resources/genome/index/alevin",
     output:
-        "results/alevin/{sample}",
+        directory("results/alevin/{sample}"),
     params:
         reads1=lambda wildcards, input: ','.join(input.fq1),
         reads2=lambda wildcards, input: ','.join(input.fq2),
@@ -80,7 +79,7 @@ rule alevin_quant:
         err="logs/genome/alevin/quant/{sample}.err",
     threads: 16
     resources:
-        mem="8G",
+        mem="16G",
         runtime="4h",
     shell:
         "jobdir=$(pwd) &&"
